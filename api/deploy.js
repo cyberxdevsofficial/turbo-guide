@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         const response = await fetch('https://api.vercel.com/v13/deployments', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${process.env.VERCEL_TOKEN}`,
+                'Authorization': `Bearer vcp_2I2124PuAUwewd2B78ELbnHBCZUJyWJ3byqHE3vsCGm87YBGK13bWcl0`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
