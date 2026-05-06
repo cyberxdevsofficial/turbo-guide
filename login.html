@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Dark Tech Zone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen px-4">
+
+    <div class="glass-panel p-8 max-w-sm w-full animate-fade">
+        <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back</h2>
+        
+        <form id="loginForm" class="space-y-4">
+            <input type="email" id="email" placeholder="Email Address" class="input-field" required>
+            <input type="password" id="password" placeholder="Password" class="input-field" required>
+            
+            <button type="submit" class="btn-primary">LOGIN</button>
+        </form>
+
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-white/10"></div></div>
+            <div class="relative flex justify-center text-xs"><span class="px-2 bg-[#0a0a0c] text-slate-500 rounded">OR</span></div>
+        </div>
+
+        <button id="googleLoginBtn" class="btn-google btn-primary">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5">
+            Continue with Google
+        </button>
+
+        <p class="mt-6 text-center text-xs text-slate-400">
+            Don't have an account? <a href="register.html" class="text-cyan-400 hover:underline">Register</a>
+        </p>
+    </div>
+
+    <footer class="footer-text mono">
+        © Developed & Designed by Anuga Senithu ( DTZ CYBER ANUWH )
+    </footer>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIelYi9WikJEq3fW8pmfP11mzpwwI0JRM",
+            authDomain: "dark-tech-9e8ce.firebaseapp.com",
+            projectId: "dark-tech-9e8ce",
+            storageBucket: "dark-tech-9e8ce.firebasestorage.app",
+            messagingSenderId: "349539922644",
+            appId: "1:349539922644:web:be3e7d12a7edfae3b64141"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Email Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                alert("Login Failed: " + error.message);
+            }
+        });
+
+        // Google Login
+        document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                alert("Google Login Failed: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

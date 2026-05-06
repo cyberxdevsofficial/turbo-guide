@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Dark Tech Zone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen px-4">
+
+    <div class="glass-panel p-8 max-w-sm w-full animate-fade">
+        <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+        
+        <form id="registerForm" class="space-y-4">
+            <input type="email" id="email" placeholder="Email Address" class="input-field" required>
+            <input type="password" id="password" placeholder="Create Password" class="input-field" required>
+            
+            <button type="submit" class="btn-primary">REGISTER</button>
+        </form>
+
+        <p class="mt-6 text-center text-xs text-slate-400">
+            Already have an account? <a href="login.html" class="text-cyan-400 hover:underline">Login</a>
+        </p>
+    </div>
+
+    <footer class="footer-text mono">
+        © Developed & Designed by Anuga Senithu ( DTZ CYBER ANUWH )
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIelYi9WikJEq3fW8pmfP11mzpwwI0JRM",
+            authDomain: "dark-tech-9e8ce.firebaseapp.com",
+            projectId: "dark-tech-9e8ce",
+            storageBucket: "dark-tech-9e8ce.firebasestorage.app",
+            messagingSenderId: "349539922644",
+            appId: "1:349539922644:web:be3e7d12a7edfae3b64141"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                alert("Account Created! Redirecting...");
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                alert("Registration Failed: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

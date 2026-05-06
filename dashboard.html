@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Dark Tech Zone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen pb-10">
+
+    <!-- Navbar -->
+    <nav class="glass-panel border-b border-white/5 sticky top-0 z-50 px-6 py-4 flex justify-between items-center mb-8 rounded-none border-t-0 border-l-0 border-r-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-sm shadow-lg shadow-purple-500/20">H</div>
+            <p class="font-black text-xs uppercase tracking-widest" id="userDisplay">USER</p>
+        </div>
+        <button onclick="logout()" class="text-[10px] font-bold text-red-400 border border-red-400/20 px-4 py-2 rounded-lg hover:bg-red-400/10 transition">
+            LOGOUT
+        </button>
+    </nav>
+
+    <main class="px-4 max-w-4xl mx-auto">
+        
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="glass-panel p-5 border-white/5">
+                <p class="text-[10px] uppercase text-slate-500 font-bold mb-2">Deployments</p>
+                <p class="text-2xl font-mono text-cyan-400" id="deployCount">0</p>
+            </div>
+            <div class="glass-panel p-5 border-white/5">
+                <p class="text-[10px] uppercase text-slate-500 font-bold mb-2">Status</p>
+                <p class="text-xs font-mono text-emerald-400 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span> ONLINE
+                </p>
+            </div>
+        </div>
+
+        <!-- Deployment Form -->
+        <div class="glass-panel p-6 md:p-8 border-white/10 mb-8">
+            <h3 class="text-sm font-bold uppercase mb-6 text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                New Deployment
+            </h3>
+            
+            <form id="deployForm" class="space-y-4">
+                <div>
+                    <label class="text-[10px] uppercase text-slate-500 font-bold ml-1">Project Name</label>
+                    <input type="text" id="siteName" placeholder="my-awesome-site" required class="input-field mt-2" />
+                </div>
+                
+                <div>
+                    <label class="text-[10px] uppercase text-slate-500 font-bold ml-1">HTML Code</label>
+                    <textarea id="htmlCode" placeholder="<h1>Hello World</h1>" class="input-field mt-2 h-40 mono text-xs" required></textarea>
+                </div>
+
+                <button type="submit" id="deployBtn" class="btn-primary flex justify-center items-center gap-2">
+                    <span>PUSH TO VERCEL</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Success Box -->
+        <div id="successBox" class="hidden glass-panel border-emerald-500/30 p-6 rounded-2xl mb-8 bg-emerald-500/5 animate-fade">
+            <p class="text-xs text-emerald-400 font-bold mb-3 uppercase">Deployment Successful!</p>
+            <div class="flex gap-2">
+                <input type="text" id="liveUrl" readonly class="input-field mono text-xs text-cyan-300 bg-black/50" />
+                <button onclick="copyLink()" class="bg-white text-black px-4 rounded-xl font-bold text-xs whitespace-nowrap">COPY</button>
+            </div>
+        </div>
+
+        <!-- Terminal Log -->
+        <div class="bg-black rounded-xl p-4 font-mono text-[10px] h-48 overflow-y-auto border border-white/10 shadow-inner" id="terminal">
+            <div class="text-slate-500">> System Initialized...</div>
+            <div class="text-slate-500">> Waiting for input...</div>
+        </div>
+
+    </main>
+
+    <footer class="footer-text mono mt-12">
+        © Developed & Designed by Anuga Senithu ( DTZ CYBER ANUWH )
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIelYi9WikJEq3fW8pmfP11mzpwwI0JRM",
+            authDomain: "dark-tech-9e8ce.firebaseapp.com",
+            projectId: "dark-tech-9e8ce",
+            storageBucket: "dark-tech-9e8ce.firebasestorage.app",
+            messagingSenderId: "349539922644",
+            appId: "1:349539922644:web:be3e7d12a7edfae3b64141"
+        };
+
+        // ⚠️ SECURITY WARNING: In a real app, never expose your Vercel Token in client-side code.
+        // Use a Serverless Function (Vercel API Route) to handle the deployment request.
+        const VERCEL_TOKEN = "vcp_3ujsCSlcACyO2nC2XXmRCyTTrTMAGwfCIia64rrsEUGdWzt7Gj0qDZZS"; 
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null;
+
+        // --- AUTH CHECK ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('userDisplay').textContent = user.email.split('@')[0].toUpperCase();
+                loadHistory();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // --- LOGOUT ---
+        window.logout = () => {
+            signOut(auth).then(() => window.location.href = "index.html");
+        };
+
+        // --- DEPLOYMENT LOGIC ---
+        document.getElementById('deployForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentUser) return alert("Please login first");
+
+            const btn = document.getElementById('deployBtn');
+            const name = document.getElementById('siteName').value.trim().toLowerCase().replace(/\s+/g, '-');
+            const content = document.getElementById('htmlCode').value;
+            
+            btn.disabled = true; 
+            btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> DEPLOYING...`;
+            
+            addLog(`Initializing deployment for: ${name}`);
+
+            try {
+                // 1. Deploy to Vercel
+                const res = await fetch('https://api.vercel.com/v13/deployments', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`, 
+                        'Content-Type': 'application/json' 
+                    },
+                    body: JSON.stringify({
+                        name: `${name}-${Date.now()}`, // Unique name to avoid conflicts
+                        files: [{ 
+                            file: 'index.html', 
+                            data: btoa(unescape(encodeURIComponent(content))), 
+                            encoding: 'base64' 
+                        }],
+                        projectSettings: { framework: null }
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if(data.url) {
+                    const finalUrl = `https://${data.url}`;
+                    addLog(`Success: ${finalUrl}`, 'success');
+                    
+                    // 2. Save to Firestore
+                    await addDoc(collection(db, "deployments"), {
+                        uid: currentUser.uid,
+                        name: name,
+                        url: finalUrl,
+                        timestamp: new Date()
+                    });
+
+                    document.getElementById('liveUrl').value = finalUrl;
+                    document.getElementById('successBox').classList.remove('hidden');
+                    loadHistory();
+                } else {
+                    addLog(`Error: ${data.error?.message || 'Unknown Error'}`, 'error');
+                }
+            } catch(err) {
+                addLog(`Critical Failure: ${err.message}`, 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<span>PUSH TO VERCEL</span>`;
+        });
+
+        // --- HISTORY LOADER ---
+        async function loadHistory() {
+            if(!currentUser) return;
+            const q = query(collection(db, "deployments"), where("uid", "==", currentUser.uid), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            const count = querySnapshot.size;
+            document.getElementById('deployCount').textContent = count;
+
+            // You can render a list here if you want, currently just updating count
+        }
+
+        // --- UTILS ---
+        function addLog(msg, type='') {
+            const t = document.getElementById('terminal');
+            const l = document.createElement('div');
+            const color = type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-red-400' : 'text-slate-400';
+            l.className = `mb-1 ${color}`;
+            l.textContent = `> ${msg}`;
+            t.appendChild(l);
+            t.scrollTop = t.scrollHeight;
+        }
+
+        window.copyLink = () => {
+            const copyText = document.getElementById("liveUrl");
+            copyText.select();
+            document.execCommand("copy");
+            alert("URL Copied to Clipboard!");
+        }
+    </script>
+</body>
+</html>
